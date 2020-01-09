@@ -1,16 +1,16 @@
 <!doctype html>
 <!--
-Copyright 2017 Analog Devices, Inc & JellyWare Inc.
+Copyright 2020 Beacon Technologies & JellyWare Inc.
 -->
 <html>
 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Web Bluetooth API Sample">
+    <meta name="description" content="BLE Gas Sensor">
     <meta name="viewport" content="width=640, maximum-scale=1.0, user-scalable=yes">
     <title>BlueJelly</title>
-    <link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900" rel="stylesheet" type="text/css">
+    
     <link rel="stylesheet" href="style.css">
     <script type="text/javascript" src="bluejelly.js"></script>
 </head>
@@ -18,8 +18,8 @@ Copyright 2017 Analog Devices, Inc & JellyWare Inc.
 <body>
     <div class="container">
         <div class="title margin">
-            <p id="title">Web Bluetooth API Sample</p>
-            <p id="subtitle">#01 BatteryLevelの読み込み</p>
+            <p id="title">BLE Gas Sensor</p>
+            <p id="subtitle">検出レベル</p>
         </div>
         <div class="contents margin">
             <button id="readData" class="button">Read</button>
@@ -33,7 +33,7 @@ Copyright 2017 Analog Devices, Inc & JellyWare Inc.
 
         </div>
         <div class="footer margin">
-          &copy; 2017 <a href="http://www.analog.com/jp/" target="_blank">Analog Devices, Inc</a> & <a href="http://jellyware.jp/" target="_blank">JellyWare Inc.</a> All Rights Reserved
+          &copy; 2020 <a href="http://www.beacon-tech.co.jp/" target="_blank">Beacon Technologies, Inc</a> All Rights Reserved
         </div>
     </div>
     <script>
@@ -48,7 +48,7 @@ Copyright 2017 Analog Devices, Inc & JellyWare Inc.
         //ボタンが押された時のイベント登録
         //--------------------------------------------------
         document.getElementById('readData').addEventListener('click', function() {
-            ble.read('BatteryLevel');
+            ble.read('GasLevelUUID');
         });
 
         document.getElementById('reset').addEventListener('click', function() {
@@ -65,7 +65,7 @@ Copyright 2017 Analog Devices, Inc & JellyWare Inc.
             document.getElementById('data_text').innerHTML = "No Data"
 
             //UUIDの設定
-            ble.setUUID("BatteryLevel", "0000180f-0000-1000-8000-00805f9b34fb", "00002a19-0000-1000-8000-00805f9b34fb");
+            ble.setUUID("GasLevelUUID", "0000180d-0000-1000-8000-00805f9b34fb", "00002a19-0000-1000-8000-00805f9b34fb");
         }
 
 
@@ -89,7 +89,7 @@ Copyright 2017 Analog Devices, Inc & JellyWare Inc.
             document.getElementById('data_text').innerHTML = value;
 
             //再びRead
-            ble.read('BatteryLevel');
+            ble.read('GasLevelUUID');
         }
 
 
