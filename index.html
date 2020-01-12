@@ -10,9 +10,12 @@ Copyright 2020 Beacon Technologies & JellyWare Inc.
     <meta name="description" content="BLE Gas Sensor">
     <meta name="viewport" content="width=640, maximum-scale=1.0, user-scalable=yes">
     <title>BlueJelly</title>
-    
+    <link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="style.css">
+    <!--BlueJellyの呼び出し-->
     <script type="text/javascript" src="bluejelly.js"></script>
+    <!--Smooth Chartsの呼び出し-->
+    <script type="text/javascript" src="./smoothie.js"></script>
 </head>
 
 <body>
@@ -24,14 +27,14 @@ Copyright 2020 Beacon Technologies & JellyWare Inc.
         <div class="contents margin">
             <button id="Start" class="button">Start</button>
             <button id="Stop" class="button">Stop</button>
-
             <hr>
-
             <div id="device_name">xxxx</div>
-            <div id="uuid_name"> </div>
+            <div id="uuid_name">xxxx</div>
             <div id="data_text">xxxx</div>
-            <div id="status"> </div>
-
+            <div id="status">xxxx</div>
+            <hr>
+            <!--CANVASを準備-->
+            <canvas id="canvas" width="500" height="320"></canvas>
 
         </div>
         <div class="footer margin">
@@ -44,20 +47,34 @@ Copyright 2020 Beacon Technologies & JellyWare Inc.
         //--------------------------------------------------
         //BlueJellyのインスタンス生成
         var ble = new BlueJelly();
-
+        //時系列オブジェクトの生成
+        var ble_data = new TimeSeries();
 
         //-------------------------------------------------
-        //ボタンが押された時のイベント登録
-        //--------------------------------------------------
-        document.getElementById('Start').addEventListener('click', function() {
-            ble.startNotify('GasLevelUUID');
-        });
-
-        document.getElementById('Stop').addEventListener('click', function() {
-            ble.stopNotify('GasLevelUUID');
-        });
-
-
+        //Smooth Charts初期化関数
+        //-------------------------------------------------
+        function initSmoothCharts() {
+            //chart(SmoothieChartの背景/軸のインスタンス)生成
+            var chart = new SmoothieChart({
+                millisPerPixel: 20,             // ms/Pixel　横軸ロール速度
+                grid: {
+                    fillStyle: '#ff8319',       // 背景色
+                    strokeStyle: '#ffffff',     // 軸と補助線の色
+                    millisPerLine: 800          // ms/line  補助線間隔
+                },
+                // maxValue: 1024,                 // 縦軸最大値(省略で自動調整)
+                // minValue: 0                     // 縦軸最少値(省略で自動調整)
+            });
+            //chartオブジェクト(背景/軸)にble_dataオブジェクト(時系列)を紐付け
+            chart.addTimeSeries(ble_data, {
+                strokeStyle: 'rgba(255, 255, 255, 1)',  // 折れ線の色(A：0透明~1.0不透明)
+                fillStyle: 'rgba(255, 255, 255, 0.2)',  // 折れ線より下の領域の色(A：0透明~1.0不透明)
+                lineWidth: 4                            // 折れ線の太さ
+            });
+            //chartオブジェクトをcanvas(HTMLのCANVASオブジェクト)に紐付け
+            chart.streamTo(document.getElementById("canvas"), 500); // ms 遅延バッファ
+        }
+        
         //--------------------------------------------------
         //ロード時の処理
         //--------------------------------------------------
@@ -70,6 +87,9 @@ Copyright 2020 Beacon Technologies & JellyWare Inc.
 
             //UUIDの設定
             ble.setUUID("GasLevelUUID", "0000180d-0000-1000-8000-00805f9b34fb", "00002a37-0000-1000-8000-00805f9b34fb");
+        
+            //Smooth Charts初期化
+            initSmoothCharts();
         }
 
 
@@ -79,26 +99,17 @@ Copyright 2020 Beacon Technologies & JellyWare Inc.
         ble.onScan = function(deviceName) {
             //HTMLに表示
             document.getElementById('device_name').innerHTML = deviceName;
+            document.getElementById('status').innerHTML = "found device!";
         }
 
         //--------------------------------------------------
-        //Nortify開始の処理
+        //ConnectGATT後の処理
         //--------------------------------------------------
-        ble.onStartNotify = function(uuid){
-            console.log('> Start Notify!');
- 
-            document.getElementById('uuid_name').innerHTML = uuid;
-            document.getElementById('status').innerHTML = "started Notify";
-        }
+        ble.onConnectGATT = function (uuid) {
+            console.log('> connected GATT!');
 
-        //--------------------------------------------------
-        //Nortify終了の処理
-        //--------------------------------------------------
-        ble.onStopNotify = function(uuid){
-            console.log('> Stop Notify!');
- 
             document.getElementById('uuid_name').innerHTML = uuid;
-            document.getElementById('status').innerHTML = "stopped Notify";
+             document.getElementById('status').innerHTML = "connected GATT!";
         }
 
         //--------------------------------------------------
@@ -116,6 +127,30 @@ Copyright 2020 Beacon Technologies & JellyWare Inc.
  
             document.getElementById('uuid_name').innerHTML = uuid;
             document.getElementById('status').innerHTML = "read data"
+
+            //グラフへ反映
+             ble_data.append(new Date().getTime(), value);
+        }
+
+
+        //--------------------------------------------------
+        //Start Nortify後の処理
+        //--------------------------------------------------
+        ble.onStartNotify = function(uuid){
+            console.log('> Start Notify!');
+ 
+            document.getElementById('uuid_name').innerHTML = uuid;
+            document.getElementById('status').innerHTML = "started Notify";
+        }
+
+        //--------------------------------------------------
+        //Stop Nortify後の処理
+        //--------------------------------------------------
+        ble.onStopNotify = function(uuid){
+            console.log('> Stop Notify!');
+ 
+            document.getElementById('uuid_name').innerHTML = uuid;
+            document.getElementById('status').innerHTML = "stopped Notify";
         }
 
 
@@ -126,6 +161,18 @@ Copyright 2020 Beacon Technologies & JellyWare Inc.
             //HTMLに表示
             document.getElementById('device_name').innerHTML = "No Device";
         }
+
+        //-------------------------------------------------
+        //ボタンが押された時のイベント登録
+        //--------------------------------------------------
+        document.getElementById('Start').addEventListener('click', function() {
+            ble.startNotify('GasLevelUUID');
+        });
+
+        document.getElementById('Stop').addEventListener('click', function() {
+            ble.stopNotify('GasLevelUUID');
+        });
+
     </script>
 </body>
 
